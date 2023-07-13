@@ -33,9 +33,9 @@ namespace HUST.Core.Services
         private readonly IMemoryCache _memCache;
         private readonly ISessionService _sessionService;
         private readonly IMailService _mailService;
-
-        private const string CallbackLinkActivateAccount = "http://localhost:3000/activate-account/";
-        private const string CallbackLinkResetPassword = "http://localhost:3000/reset-password/";
+        private readonly string UIAppUrl;
+        private readonly string CallbackLinkActivateAccount;
+        private readonly string CallbackLinkResetPassword;
 
         #endregion
 
@@ -57,6 +57,10 @@ namespace HUST.Core.Services
             _memCache = memCache;
             _sessionService = sessionService;
             _mailService = mailService;
+
+            UIAppUrl = this.ServiceCollection.ConfigUtil.GetAPIUrl(UIAppConfigs.Url);
+            CallbackLinkActivateAccount = UIAppUrl + "/activate-account/";
+            CallbackLinkResetPassword = UIAppUrl + "/reset-password/";
         }
 
         #endregion
@@ -344,7 +348,7 @@ namespace HUST.Core.Services
             if (payload == null || payload.TimeExpired < DateTime.Now || payload.Name != CallbackTokenName.ResetPassword)
             {
                 return Task.FromResult(res.OnError(ErrorCode.Err1003, ErrorMessage.Err1003));
-            } 
+            }
 
             return Task.FromResult(res.OnSuccess());
         }
@@ -394,6 +398,31 @@ namespace HUST.Core.Services
             }
 
             return res;
+        }
+
+        /// <summary>
+        /// Lấy thông tin tài khoản: user, dictionary
+        /// </summary>
+        /// <returns></returns>
+        public async Task<IServiceResult> GetAccountInfo()
+        {
+            var res = new ServiceResult();
+
+            var user = await _userRepository.SelectObject<User>(new
+            {
+                user_id = this.ServiceCollection.AuthUtil.GetCurrentUserId()
+            }) as User;
+
+            var dict = await _dictionaryRepository.SelectObject<Dictionary>(new
+            {
+                dictionary_id = this.ServiceCollection.AuthUtil.GetCurrentDictionaryId()
+            }) as Dictionary;
+
+            return res.OnSuccess(new
+            {
+                User = user,
+                Dictionary = dict
+            });
         }
         #endregion
 
@@ -492,7 +521,7 @@ namespace HUST.Core.Services
         /// <returns></returns>
         private CallbackTokenPayload ReadCallbackToken(string token)
         {
-            if(string.IsNullOrEmpty(token))
+            if (string.IsNullOrEmpty(token))
             {
                 return null;
             }
@@ -513,7 +542,7 @@ namespace HUST.Core.Services
             {
                 return null;
             }
-            
+
 
         }
 
