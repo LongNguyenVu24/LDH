@@ -123,7 +123,7 @@ namespace HUST.Core.Services
             var keyThrottle = $"SendActivateEmail_{userName}";
             // Kiểm tra thời gian chặn api call liên tục
             var waitTime = GetThrottleTime(keyThrottle);
-            if (waitTime > 0)
+            if (waitTime > 5)
             {
                 res.OnError(ErrorCode.TooManyRequests, ErrorMessage.TooManyRequests, data: waitTime);
                 return res;
@@ -233,6 +233,25 @@ namespace HUST.Core.Services
             }
 
             // Lấy thông tin dictionary dùng gần nhất
+            //var lstDictionary = await _userRepository.SelectObjects<Dictionary>(new Dictionary<string, object>()
+            //{
+            //    { nameof(Models.Entity.dictionary.user_id), user.UserId }
+            //});
+
+            //var lastDictionary = lstDictionary
+            //    .OrderByDescending(x => x.LastViewAt)
+            //    .ThenByDescending(x => x.CreatedDate)
+            //    .FirstOrDefault();
+
+            //if (lastDictionary != null)
+            //{
+            //    user.DictionaryId = lastDictionary.DictionaryId;
+            //}
+            //else
+            //{
+            //    user.DictionaryId = null; // or set to some default value
+            //}
+
             var lstDictionary = await _userRepository.SelectObjects<Dictionary>(new Dictionary<string, object>()
             {
                 { nameof(Models.Entity.dictionary.user_id), user.UserId }
@@ -245,6 +264,27 @@ namespace HUST.Core.Services
             user.DictionaryId = lastDictionary.DictionaryId;
 
             // Cập nhật thời điểm xem dictionary
+            //if (lastDictionary != null)
+            //{
+            //    var dictionary_did = lastDictionary.DictionaryId;
+
+            //    var _ = await _dictionaryRepository.Update(new
+            //    {
+            //        dictionary_id = dictionary_did,
+            //        last_view_at = DateTime.Now
+            //    });
+            //}
+            //else
+            //{
+            //    var dictionary_did = "275ee362 - dc3f - 11ed - a1e6 - a44cc8756a37";
+
+            //    var _ = await _dictionaryRepository.Update(new
+            //    {
+            //        dictionary_id = dictionary_did,
+            //        last_view_at = DateTime.Now
+            //    });
+            //}
+
             var _ = await _dictionaryRepository.Update(new
             {
                 dictionary_id = lastDictionary.DictionaryId,
