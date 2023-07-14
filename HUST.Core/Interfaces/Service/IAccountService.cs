@@ -14,10 +14,10 @@ namespace HUST.Core.Interfaces.Service
         /// <summary>
         /// Xử lý đăng ký tài khoản
         /// </summary>
-        /// <param name="userName"></param>
+        /// <param name="username"></param>
         /// <param name="password"></param>
         /// <returns></returns>
-        Task<IServiceResult> Register(string userName, string password);
+        Task<IServiceResult> Register(string username, string password);
 
         /// <summary>
         /// Xử lý yêu cầu gửi email xác minh tài khoản

@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Net.Http.Headers;
+using Org.BouncyCastle.Bcpg;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -127,7 +128,7 @@ namespace HUST.Core.Services
             var keyThrottle = $"SendActivateEmail_{userName}";
             // Kiểm tra thời gian chặn api call liên tục
             var waitTime = GetThrottleTime(keyThrottle);
-            if (waitTime > 0)
+            if (waitTime > 5)
             {
                 res.OnError(ErrorCode.TooManyRequests, ErrorMessage.TooManyRequests, data: waitTime);
                 return res;
@@ -237,6 +238,26 @@ namespace HUST.Core.Services
             }
 
             // Lấy thông tin dictionary dùng gần nhất
+
+            //var lstDictionary = await _userRepository.SelectObjects<Dictionary>(new Dictionary<string, object>()
+            //{
+            //    { nameof(Models.Entity.dictionary.user_id), user.UserId }
+            //});
+
+            //var lastDictionary = lstDictionary
+            //    .OrderByDescending(x => x.LastViewAt)
+            //    .ThenByDescending(x => x.CreatedDate)
+            //    .FirstOrDefault();
+
+            //if (lastDictionary != null)
+            //{
+            //    user.DictionaryId = lastDictionary.DictionaryId;
+            //}
+            //else
+            //{
+            //    user.DictionaryId = null; // or set to some default value
+            //}
+
             var lstDictionary = await _userRepository.SelectObjects<Dictionary>(new Dictionary<string, object>()
             {
                 { nameof(Models.Entity.dictionary.user_id), user.UserId }
@@ -249,22 +270,29 @@ namespace HUST.Core.Services
             user.DictionaryId = lastDictionary.DictionaryId;
 
             // Cập nhật thời điểm xem dictionary
-            var _ = await _dictionaryRepository.Update(new
-            {
-                dictionary_id = lastDictionary.DictionaryId,
-                last_view_at = DateTime.Now
-            });
+            //if (lastDictionary != null)
+            //{
+                var dictionary_did = lastDictionary.DictionaryId;
+
+                var _ = await _dictionaryRepository.Update(new
+                {
+                    dictionary_id = dictionary_did,
+                    last_view_at = DateTime.Now
+                });
+            //}
 
             // Xóa token, session nếu có
             this.RemoveCurrentSession();
             // Sinh token, session
             var sessionId = this.GenerateSession(user);
+            var token = this.GenerateTokenActivateAccount(user.UserId.ToString());
             // Gán session vào response trả về
             this.SetResponseSessionCookie(sessionId);
 
             res.OnSuccess(new
             {
-                SessionId = sessionId,
+                Token = token,
+                //SessionId = sessionId,
                 user.UserId,
                 user.UserName,
                 user.DisplayName,
