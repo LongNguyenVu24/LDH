@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Net.Http.Headers;
+using Org.BouncyCastle.Bcpg;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -233,6 +234,7 @@ namespace HUST.Core.Services
             }
 
             // Lấy thông tin dictionary dùng gần nhất
+
             //var lstDictionary = await _userRepository.SelectObjects<Dictionary>(new Dictionary<string, object>()
             //{
             //    { nameof(Models.Entity.dictionary.user_id), user.UserId }
@@ -266,41 +268,27 @@ namespace HUST.Core.Services
             // Cập nhật thời điểm xem dictionary
             //if (lastDictionary != null)
             //{
-            //    var dictionary_did = lastDictionary.DictionaryId;
+                var dictionary_did = lastDictionary.DictionaryId;
 
-            //    var _ = await _dictionaryRepository.Update(new
-            //    {
-            //        dictionary_id = dictionary_did,
-            //        last_view_at = DateTime.Now
-            //    });
+                var _ = await _dictionaryRepository.Update(new
+                {
+                    dictionary_id = dictionary_did,
+                    last_view_at = DateTime.Now
+                });
             //}
-            //else
-            //{
-            //    var dictionary_did = "275ee362 - dc3f - 11ed - a1e6 - a44cc8756a37";
-
-            //    var _ = await _dictionaryRepository.Update(new
-            //    {
-            //        dictionary_id = dictionary_did,
-            //        last_view_at = DateTime.Now
-            //    });
-            //}
-
-            var _ = await _dictionaryRepository.Update(new
-            {
-                dictionary_id = lastDictionary.DictionaryId,
-                last_view_at = DateTime.Now
-            });
 
             // Xóa token, session nếu có
             this.RemoveCurrentSession();
             // Sinh token, session
             var sessionId = this.GenerateSession(user);
+            var token = this.GenerateTokenActivateAccount(user.UserId.ToString());
             // Gán session vào response trả về
             this.SetResponseSessionCookie(sessionId);
 
             res.OnSuccess(new
             {
-                SessionId = sessionId,
+                Token = token,
+                //SessionId = sessionId,
                 user.UserId,
                 user.UserName,
                 user.DisplayName,
